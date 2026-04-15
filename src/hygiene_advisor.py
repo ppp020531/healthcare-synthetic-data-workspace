@@ -116,6 +116,19 @@ def review_hygiene(df: pd.DataFrame, profile: dict[str, Any]) -> dict[str, Any]:
                     "Clean or cap invalid negative values before synthetic generation.",
                 )
 
+        if details["semantic_role"] == "date":
+            parsed = pd.to_datetime(cleaned[column], errors="coerce", format="mixed")
+            invalid_dates = int((cleaned[column].notna() & parsed.isna()).sum())
+            if invalid_dates:
+                _add_issue(
+                    issues,
+                    "Medium",
+                    column,
+                    "Invalid dates",
+                    f"{invalid_dates} values do not parse as valid dates.",
+                    "Convert unparseable dates to missing or standardize them before approval.",
+                )
+
         if details["semantic_role"] in {"categorical", "binary"}:
             non_null = cleaned[column].dropna().astype(str)
             if non_null.empty:
@@ -150,4 +163,3 @@ def review_hygiene(df: pd.DataFrame, profile: dict[str, Any]) -> dict[str, Any]:
             "duplicate_rows": duplicate_rows,
         },
     }
-
